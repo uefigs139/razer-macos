@@ -93,9 +93,22 @@ function getFeatureMenuFor(application, device, feature) {
 }
 
 function getFeatureBatteryLevel(application, device, feature) {
-  const getBatterySourceDevice = () => {
+  const getDockTargetDevice = () => {
     if (device.mainType !== RazerDeviceType.MOUSEDOCK) {
       return device;
+    }
+
+    const devices = application.razerApplication.deviceManager.activeRazerDevices || [];
+    // Resolve the live dock object every tick in case the device list refreshed.
+    return devices.find(activeDevice =>
+      activeDevice.mainType === RazerDeviceType.MOUSEDOCK
+      && activeDevice.productId === device.productId,
+    ) || device;
+  };
+
+  const getBatterySourceDevice = () => {
+    if (device.mainType !== RazerDeviceType.MOUSEDOCK) {
+      return getDockTargetDevice();
     }
 
     // Dock has no own battery telemetry; map to an attached mouse battery.
@@ -110,6 +123,7 @@ function getFeatureBatteryLevel(application, device, feature) {
   };
 
   const updateBatteryColor = () => {
+    const dockTargetDevice = getDockTargetDevice();
     const batterySourceDevice = getBatterySourceDevice();
     if (batterySourceDevice && typeof batterySourceDevice.refresh === 'function') {
       batterySourceDevice.refresh();
@@ -117,7 +131,7 @@ function getFeatureBatteryLevel(application, device, feature) {
 
     const batteryLevel = batterySourceDevice ? batterySourceDevice.batteryLevel : null;
     if (!batteryLevel || batteryLevel === -1) {
-      device.setModeStatic([255, 255, 255]);
+      dockTargetDevice.setModeStatic([255, 255, 255]);
       return;
     }
 
@@ -132,15 +146,25 @@ function getFeatureBatteryLevel(application, device, feature) {
       r = Math.round(510 - 5.10 * batteryLevel);
     }
 
-    device.setModeStatic([r, g, 0]);
+    dockTargetDevice.setModeStatic([r, g, 0]);
   };
 
   return {
     label: 'Battery level',
     click() {
       if (device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
-      updateBatteryColor();
-      device.batteryLevelInterval = setInterval(updateBatteryColor, 15000);
+      try {
+        updateBatteryColor();
+      } catch (error) {
+        console.warn('Failed to apply initial battery color update', error);
+      }
+      device.batteryLevelInterval = setInterval(() => {
+        try {
+          updateBatteryColor();
+        } catch (error) {
+          console.warn('Failed battery color update tick', error);
+        }
+      }, 15000);
     },
   };
 }
