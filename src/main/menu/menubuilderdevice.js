@@ -92,6 +92,17 @@ function getFeatureMenuFor(application, device, feature) {
   }
 }
 
+function clearBatteryMode(device) {
+  if (device.batteryLevelInterval) {
+    clearInterval(device.batteryLevelInterval);
+    device.batteryLevelInterval = null;
+  }
+  if (device.settings && device.settings.batteryModeActive) {
+    device.settings.batteryModeActive = false;
+    device.setSettings(device.settings);
+  }
+}
+
 function getFeatureBatteryLevel(application, device, feature) {
   const getDockTargetDevice = () => {
     if (device.mainType !== RazerDeviceType.MOUSEDOCK) {
@@ -149,10 +160,30 @@ function getFeatureBatteryLevel(application, device, feature) {
     dockTargetDevice.setModeStatic([r, g, 0]);
   };
 
+  // Auto-start polling if battery mode was active when the app last ran.
+  if (device.settings && device.settings.batteryModeActive && !device.batteryLevelInterval) {
+    try {
+      updateBatteryColor();
+    } catch (error) {
+      console.warn('Failed to apply initial battery color update', error);
+    }
+    device.batteryLevelInterval = setInterval(() => {
+      try {
+        updateBatteryColor();
+      } catch (error) {
+        console.warn('Failed battery color update tick', error);
+      }
+    }, 15000);
+  }
+
   return {
     label: 'Battery level',
     click() {
       if (device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+      if (device.settings) {
+        device.settings.batteryModeActive = true;
+        device.setSettings(device.settings);
+      }
       try {
         updateBatteryColor();
       } catch (error) {
@@ -173,7 +204,7 @@ function getFeatureBreath(application, device, feature) {
   return {
     label: 'Breathe',
     click() {
-      if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+      clearBatteryMode(device);
       // random
       device.setBreathe([0]);
     },
@@ -213,7 +244,7 @@ function getFeatureNone(application, device, feature) {
   return {
     label: 'None',
     click() {
-      if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+      clearBatteryMode(device);
       device.setModeNone();
     },
   };
@@ -225,28 +256,28 @@ function getFeatureOldMouseEffect(application, device, feature) {
     feature.configuration.enabledStatic ? {
       label: 'Static',
       click() {
-        if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+        clearBatteryMode(device);
         device.setLogoLEDEffect('static');
       },
     } : null,
     feature.configuration.enabledBlinking ? {
       label: 'Blinking',
       click() {
-        if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+        clearBatteryMode(device);
         device.setLogoLEDEffect('blinking');
       },
     } : null,
     feature.configuration.enabledPulsate ? {
       label: 'Pulsate',
       click() {
-        if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+        clearBatteryMode(device);
         device.setLogoLEDEffect('pulsate');
       },
     } : null,
     feature.configuration.enabledScroll ? {
       label: 'Scroll',
       click() {
-        if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+        clearBatteryMode(device);
         device.setLogoLEDEffect('scroll');
       },
     } : null,
@@ -263,7 +294,7 @@ function getFeatureReactive(application, device, feature) {
     return {
       label: label,
       click() {
-        if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+        clearBatteryMode(device);
         device.setReactive(colorMode);
       },
     };
@@ -293,7 +324,7 @@ function getFeatureRipple(application, device, feature) {
     return {
       label: label,
       click() {
-        if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+        clearBatteryMode(device);
         device.setRippleEffect(feature.configuration, color, backgroundColor);
       },
     };
@@ -328,7 +359,7 @@ function getFeatureWheel(application, device, feature) {
     return {
       label: label,
       click() {
-        if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+        clearBatteryMode(device);
         device.setWheelEffect(feature.configuration, speed);
       },
     };
@@ -348,7 +379,7 @@ function getFeatureSpectrum(application, device, feature) {
   return {
     label: 'Spectrum',
     click() {
-      if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+      clearBatteryMode(device);
       device.setSpectrum();
     },
   };
@@ -359,7 +390,7 @@ function getFeatureStarlight(application, device, feature) {
     return {
       label: label,
       click() {
-        if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+        clearBatteryMode(device);
         device.setStarlight([speed].concat(colors));
       },
     };
@@ -434,7 +465,7 @@ function getFeatureStatic(application, device, feature) {
     return {
       label: label,
       click() {
-        if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+        clearBatteryMode(device);
         device.setModeStatic(color);
       },
     };
@@ -459,7 +490,7 @@ function getFeatureWaveExtended(application, device, feature) {
     return {
       label: label,
       click() {
-        if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+        clearBatteryMode(device);
         device.setWaveExtended(directionSpeed);
       },
     };
@@ -501,14 +532,14 @@ function getFeatureWaveSimple(application, device, feature) {
       {
         label: 'Left',
         click() {
-          if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+          clearBatteryMode(device);
           device.setWaveSimple('left');
         },
       },
       {
         label: 'Right',
         click() {
-          if(device.batteryLevelInterval) clearInterval(device.batteryLevelInterval);
+          clearBatteryMode(device);
           device.setWaveSimple('right');
         },
       },
