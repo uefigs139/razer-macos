@@ -92,6 +92,11 @@ function getFeatureMenuFor(application, device, feature) {
   }
 }
 
+// Battery level moves over hours, so a slow tick is plenty. Each tick makes a
+// synchronous native USB call, so this doubles as limiting exposure to a stale
+// device handle.
+const BATTERY_POLL_MS = 120000;
+
 function clearBatteryMode(device) {
   if (device.batteryLevelInterval) {
     clearInterval(device.batteryLevelInterval);
@@ -111,10 +116,13 @@ function getFeatureBatteryLevel(application, device, feature) {
 
     const devices = application.razerApplication.deviceManager.activeRazerDevices || [];
     // Resolve the live dock object every tick in case the device list refreshed.
+    // Deliberately no fallback to the captured `device`: once the dock leaves the
+    // active list its native handle has been released, and writing to it segfaults
+    // inside IOUSBLib rather than throwing something the try/catch could catch.
     return devices.find(activeDevice =>
       activeDevice.mainType === RazerDeviceType.MOUSEDOCK
       && activeDevice.productId === device.productId,
-    ) || device;
+    ) || null;
   };
 
   const getBatterySourceDevice = () => {
@@ -135,6 +143,10 @@ function getFeatureBatteryLevel(application, device, feature) {
 
   const updateBatteryColor = () => {
     const dockTargetDevice = getDockTargetDevice();
+    if (!dockTargetDevice) {
+      return;
+    }
+
     const batterySourceDevice = getBatterySourceDevice();
     if (batterySourceDevice && typeof batterySourceDevice.refresh === 'function') {
       batterySourceDevice.refresh();
@@ -173,7 +185,7 @@ function getFeatureBatteryLevel(application, device, feature) {
       } catch (error) {
         console.warn('Failed battery color update tick', error);
       }
-    }, 15000);
+    }, BATTERY_POLL_MS);
   }
 
   return {
@@ -195,7 +207,7 @@ function getFeatureBatteryLevel(application, device, feature) {
         } catch (error) {
           console.warn('Failed battery color update tick', error);
         }
-      }, 15000);
+      }, BATTERY_POLL_MS);
     },
   };
 }
