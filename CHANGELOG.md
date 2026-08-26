@@ -26,6 +26,10 @@ version number.
   0.5.0 binary carried an `app-update.yml` pointing at an unrelated repository.
 - macOS `zip` build target alongside `dmg`. electron-updater cannot apply an update from a
   `dmg`, so the zip is required for the publish configuration to be usable.
+- Device support carried in from `librazermacos`, updated from `325c96a` to `556f186`: Razer
+  Cobra, Naga X, Laptop Stand Chroma, and the Basilisk V3 X Hyperspeed, V3 35K, V3 Pro and
+  V3 Pro 35K variants. Every change there adds a new `case` to an existing switch, so devices
+  already supported are unaffected.
 
 Note that automatic updates additionally require the application to be signed with a Developer
 ID certificate. Until that is in place, this configuration enables publishing build artifacts
