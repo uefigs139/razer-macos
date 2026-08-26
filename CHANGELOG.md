@@ -19,6 +19,32 @@ version number.
 
 ## [Unreleased]
 
+### Changed
+
+- Migrated the build from `electron-webpack` to `electron-vite`. `electron-webpack` was
+  archived in 2021 and deadlocks on current Node, which made the project unbuildable on this
+  machine; `electron-vite` builds it in under a second. This also removes the `node-gyp`
+  failure against Python 3.12+, which no longer ships `distutils`.
+- Electron 11 to 44, React 16 to 18 (`ReactDOM.render` to `createRoot`), electron-builder 23
+  to 26.
+- The renderer no longer uses `nodeIntegration`, which electron-vite does not support. IPC now
+  goes through a preload script exposing only `send`, `sendSync` and `on` over
+  `contextBridge`, so `contextIsolation` is enabled for the first time. Renderer call sites are
+  unchanged: the renderer build aliases `electron` to a small bridge module.
+- Replaced the abandoned `iohook` (which pinned the project to Electron 85 prebuilds) with
+  `uiohook-napi`, used only by the keyboard ripple effect.
+- Replaced webpack-specific APIs that have no Vite equivalent: `require.context` for the 147
+  device definitions is now `import.meta.glob`, the `__static` global is now an `?asset`
+  import, and `ELECTRON_WEBPACK_WDS_PORT` is now `ELECTRON_RENDERER_URL`.
+
+### Removed
+
+- `node-forge`, `dot-prop` and `source-map-support`, none of which were referenced anywhere in
+  `src/`. `node-forge` at the pinned version carried known advisories, so dropping it removes
+  that surface rather than bumping it.
+- `electron-builder-notarize`. There is no Developer ID certificate available, so there is
+  nothing to notarize.
+
 ### Added
 
 - electron-builder `publish` configuration pointing at this fork, so a build emits an

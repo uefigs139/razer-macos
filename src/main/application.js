@@ -2,6 +2,9 @@ import { RazerApplication } from './razerapplication';
 import { app, dialog, BrowserWindow, ipcMain, Menu, nativeTheme, Tray, powerMonitor } from 'electron';
 import path from 'path';
 import { getMenuFor } from './menu/menubuilder';
+// ?asset resolves to a real file path in dev and in the packaged app,
+// replacing electron-webpack's __static global.
+import trayIconPath from '../../static/assets/iconTemplate.png?asset';
 
 const version = require('../../package.json').version;
 
@@ -218,7 +221,7 @@ export class Application {
 
   createWindow() {
     this.browserWindow = new BrowserWindow({
-      webPreferences: { nodeIntegration: true },
+      webPreferences: { preload: path.join(__dirname, '../preload/index.js') },
       //titleBarStyle: 'hidden',
       height: 800, // This is adjusted later with window.setSize
       resizable: false,
@@ -233,10 +236,10 @@ export class Application {
       show: false,
     });
     if (this.isDevelopment) {
-      this.browserWindow.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`);
+      this.browserWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
       this.browserWindow.resizable = true;
     } else {
-      this.browserWindow.loadFile(path.join(__dirname, 'index.html'));
+      this.browserWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
     }
 
     // Handle window logic properly on macOS:
@@ -289,7 +292,7 @@ export class Application {
     }
 
     // Template.png will be automatically inverted by electron: https://www.electronjs.org/docs/api/native-image#template-image
-    this.tray = new Tray(path.join(__static, '/assets/iconTemplate.png'));
+    this.tray = new Tray(trayIconPath);
     this.tray.setToolTip('Razer macOS menu');
     this.tray.on('click', () => {
       if(this.razerApplication.deviceManager.activeRazerDevices != null) {
