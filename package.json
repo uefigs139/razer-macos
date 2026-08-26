@@ -1,7 +1,11 @@
 {
   "name": "razer-macos",
-  "version": "0.4.10",
+  "version": "0.6.0",
   "description": "Open source color effects manager for Razer peripherals on macOS",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uefigs139/razer-macos.git"
+  },
   "license": "GPL-2.0-only",
   "main": "src/main/index.js",
   "scripts": {
