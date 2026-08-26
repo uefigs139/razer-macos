@@ -37,6 +37,13 @@ version number.
   device definitions is now `import.meta.glob`, the `__static` global is now an `?asset`
   import, and `ELECTRON_WEBPACK_WDS_PORT` is now `ELECTRON_RENDERER_URL`.
 
+### Fixed
+
+- Tray icon rendering solid black instead of inverting for the menu bar. macOS only infers a
+  template image when the filename ends in `Template`, and the bundler content-hashes asset
+  filenames, which broke that convention. The template flag is now set explicitly via
+  `nativeImage.setTemplateImage`, so it no longer depends on the filename.
+
 ### Removed
 
 - `node-forge`, `dot-prop` and `source-map-support`, none of which were referenced anywhere in
@@ -47,6 +54,10 @@ version number.
 
 ### Added
 
+- Menu bar battery readout: the charge of the attached mouse is shown next to the tray icon,
+  with a lightning bolt while charging. Only devices that actually report a battery are polled,
+  at 30 second intervals, and the readout is also refreshed whenever devices are re-enumerated
+  so it appears immediately at startup rather than on the next tick.
 - electron-builder `publish` configuration pointing at this fork, so a build emits an
   `app-update.yml` that refers here. Previously `publish` was unset, and the distributed
   0.5.0 binary carried an `app-update.yml` pointing at an unrelated repository.
