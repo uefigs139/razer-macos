@@ -17,6 +17,20 @@ sibling lineage, not an ancestor of this one, and none of its changes are includ
 **Version `0.5.0` is deliberately skipped** so that two different codebases never share a
 version number.
 
+## [Unreleased]
+
+### Added
+
+- electron-builder `publish` configuration pointing at this fork, so a build emits an
+  `app-update.yml` that refers here. Previously `publish` was unset, and the distributed
+  0.5.0 binary carried an `app-update.yml` pointing at an unrelated repository.
+- macOS `zip` build target alongside `dmg`. electron-updater cannot apply an update from a
+  `dmg`, so the zip is required for the publish configuration to be usable.
+
+Note that automatic updates additionally require the application to be signed with a Developer
+ID certificate. Until that is in place, this configuration enables publishing build artifacts
+to a release, not silent self-update.
+
 ## [0.6.0] - 2026-08-25
 
 First tagged release of this fork.

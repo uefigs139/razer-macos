@@ -69,6 +69,13 @@
       "buildResources": "resources"
     },
     "afterSign": "electron-builder-notarize",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "uefigs139",
+        "repo": "razer-macos"
+      }
+    ],
     "mac": {
       "category": "public.app-category.developer-tools",
       "icon": "icon.icns",
@@ -77,6 +84,12 @@
       "target": [
         {
           "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
           "arch": [
             "universal"
           ]
