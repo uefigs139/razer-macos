@@ -7,7 +7,11 @@ const api = {
   send: (channel, ...args) => ipcRenderer.send(channel, ...args),
   sendSync: (channel, ...args) => ipcRenderer.sendSync(channel, ...args),
   on: (channel, listener) => {
-    const subscription = (event, ...args) => listener(event, ...args);
+    // Electron's IpcRendererEvent is not structured-cloneable, so it cannot
+    // cross the contextBridge: forwarding it makes the call fail silently and
+    // the listener never runs. Pass null in its place, since call sites use the
+    // (event, message) signature but only ever read message.
+    const subscription = (_event, ...args) => listener(null, ...args);
     ipcRenderer.on(channel, subscription);
     return () => ipcRenderer.removeListener(channel, subscription);
   },
